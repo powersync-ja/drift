@@ -1,4 +1,4 @@
-## 2.15.0-dev
+## 2.15.0
 
 - Methods in the query builder API now respect custom types.
 - Support `DialectAwareSqlType`, custom types that depend on the dialect of the
@@ -8,6 +8,7 @@
 - Close wasm databases hosted in workers after the last client disconnects.
 - Add `enableMigrations` parameter to `NativeDatabase` which can be used to
   optionally disable database migrations when opening databases.
+- Support `jsonb` functions in the Dart query builder.
 
 ## 2.14.1
 
