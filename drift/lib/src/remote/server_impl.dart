@@ -14,7 +14,7 @@ import 'protocol.dart';
 @internal
 class ServerImplementation implements DriftServer {
   /// The Underlying database connection that will be used.
-  final QueryExecutor connection;
+  final DatabaseConnection connection;
 
   /// Whether clients are allowed to shutdown this server for all.
   final bool allowRemoteShutdown;
@@ -52,6 +52,15 @@ class ServerImplementation implements DriftServer {
     done.then((_) {
       _closeRemainingConnections();
       _tableUpdateNotifications.close();
+    });
+    print('test');
+    print(connection.streamQueries);
+    connection.streamQueries
+        .updatesForSync(TableUpdateQuery.any())
+        .forEach((update) {
+      print('zzzzzzz');
+      print(update);
+      dispatchTableUpdateNotification(NotifyTablesUpdated(update.toList()));
     });
   }
 

@@ -11,6 +11,8 @@ import 'dart:html';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:drift/drift.dart';
+import 'package:drift/src/runtime/executor/stream_queries.dart';
 import 'package:drift/src/web/wasm_setup.dart';
 import 'package:sqlite3/wasm.dart';
 
@@ -79,6 +81,58 @@ class WasmDatabase extends DelegatedDatabase {
       _WasmDelegate(sqlite3, null, setup, null, cachePreparedStatements),
       logStatements,
     );
+  }
+
+  /// Creates an in-memory database in the loaded [sqlite3] database.
+  ///
+  /// If an in-memory database is all you need, it can be created more easily
+  /// than going through the path with [open]. In particular, you probably don't
+  /// need a web worker hosting the database.
+  ///
+  /// To create an in-memory database without workers, one can use:
+  ///
+  /// ```dart
+  /// final sqlite3 = await WasmSqlite3.loadFromUrl(Uri.parse('/sqlite3.wasm'));
+  /// sqlite3.registerVirtualFileSystem(InMemoryFileSystem(), makeDefault: true);
+  ///
+  /// WasmDatabase.inMemory(sqlite3);
+  /// ```
+  static DatabaseConnection withTableUpdates({
+    required CommonSqlite3 sqlite3,
+    required String path,
+    WasmDatabaseSetup? setup,
+    IndexedDbFileSystem? fileSystem,
+    bool logStatements = false,
+    bool cachePreparedStatements = true,
+  }) {
+    // StreamQueryStore tableUpdates = StreamQueryStore();
+    // StreamQueryStore? t;
+    DatabaseConnection? closure;
+    var connection = DatabaseConnection(
+      WasmDatabase._(
+        _WasmDelegate(sqlite3, path, (CommonDatabase db) {
+          // Add table change notifications
+          db.updates.forEach((element) {
+            Future.delayed(Duration(seconds: 1), () {
+              var setUpdates = Set<TableUpdate>();
+              setUpdates.add(TableUpdate(element.tableName));
+              print('testing steven');
+              print(element);
+              // tableUpdates.handleTableUpdates(setUpdates);
+              // t?.handleTableUpdates(setUpdates);
+              closure?.streamQueries.handleTableUpdates(setUpdates);
+            });
+          });
+          if (setup != null) {
+            return setup(db);
+          }
+        }, fileSystem, cachePreparedStatements),
+        logStatements,
+      ),
+    );
+    // t = connection.streamQueries;
+    closure = connection;
+    return connection;
   }
 
   /// Opens a database on the web.

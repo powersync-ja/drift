@@ -2,15 +2,48 @@ import 'dart:async';
 
 import 'package:drift/backends.dart';
 import 'package:drift/drift.dart';
+import 'package:drift/src/runtime/executor/stream_queries.dart';
 
 /// Signature of a function that opens a database connection when instructed to.
-typedef DatabaseOpener = FutureOr<QueryExecutor> Function();
+typedef DatabaseOpener<DB extends QueryExecutor> = FutureOr<DB> Function();
+
+class LazyDatabaseConnection extends LazyDatabase<DatabaseConnection>
+    implements DatabaseConnection {
+  LazyDatabaseConnection(super.opener,
+      {SqlDialect super.dialect = SqlDialect.sqlite}) {
+    this.streamQueries = StreamQueryStore();
+  }
+
+  late final StreamQueryStore streamQueries;
+
+  @override
+  Future<void> _awaitOpened() async {
+    await super._awaitOpened();
+    // Relay updates
+    _delegate.streamQueries
+        .updatesForSync(TableUpdateQuery.any())
+        .forEach((element) {
+      streamQueries.handleTableUpdates(element);
+    });
+  }
+
+  @override
+  FutureOr<Object?> get connectionData => _delegate.connectionData;
+
+  @override
+  QueryExecutor get executor => _delegate.executor;
+
+  @override
+  DatabaseConnection withExecutor(QueryExecutor executor) {
+    return DatabaseConnection(executor, streamQueries: streamQueries);
+  }
+}
 
 /// A special database executor that delegates work to another [QueryExecutor].
 /// The other executor is lazily opened by a [DatabaseOpener].
-class LazyDatabase extends QueryExecutor {
+class LazyDatabase<Executor extends QueryExecutor> extends QueryExecutor {
   /// Underlying executor
-  late final QueryExecutor _delegate;
+  late final Executor _delegate;
 
   bool _delegateAvailable = false;
   final SqlDialect _dialect;
@@ -29,7 +62,7 @@ class LazyDatabase extends QueryExecutor {
 
   /// The function that will open the database when this [LazyDatabase] gets
   /// opened for the first time.
-  final DatabaseOpener opener;
+  final DatabaseOpener<Executor> opener;
 
   /// Declares a [LazyDatabase] that will run [opener] when the database is
   /// first requested to be opened. You must specify the same [dialect] as the

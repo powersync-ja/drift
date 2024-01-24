@@ -114,7 +114,7 @@ enum DriftWorkerMode {
 /// The [documentation](https://drift.simonbinder.eu/web/#using-web-workers)
 /// contains additional information and an example on how to use workers with
 /// Dart and Drift.
-void driftWorkerMain(QueryExecutor Function() openConnection) {
+void driftWorkerMain(DatabaseConnection Function() openConnection) {
   final self = WorkerGlobalScope.instance;
   _RunningDriftWorker worker;
 
@@ -187,7 +187,7 @@ Future<DatabaseConnection> connectToDriftWorker(String workerJsUri,
 
 class _RunningDriftWorker {
   final bool isShared;
-  final QueryExecutor Function() connectionFactory;
+  final DatabaseConnection Function() connectionFactory;
 
   DriftServer? _startedServer;
   DriftWorkerMode? _knownMode;
