@@ -8,11 +8,9 @@ library drift.wasm;
 
 import 'dart:async';
 import 'dart:html';
-import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
-import 'package:drift/src/runtime/executor/stream_queries.dart';
 import 'package:drift/src/web/wasm_setup.dart';
 import 'package:sqlite3/wasm.dart';
 
@@ -105,8 +103,6 @@ class WasmDatabase extends DelegatedDatabase {
     bool logStatements = false,
     bool cachePreparedStatements = true,
   }) {
-    // StreamQueryStore tableUpdates = StreamQueryStore();
-    // StreamQueryStore? t;
     DatabaseConnection? closure;
     var connection = DatabaseConnection(
       WasmDatabase._(
@@ -114,12 +110,8 @@ class WasmDatabase extends DelegatedDatabase {
           // Add table change notifications
           db.updates.forEach((element) {
             Future.delayed(Duration(seconds: 1), () {
-              var setUpdates = Set<TableUpdate>();
+              var setUpdates = <TableUpdate>{};
               setUpdates.add(TableUpdate(element.tableName));
-              print('testing steven');
-              print(element);
-              // tableUpdates.handleTableUpdates(setUpdates);
-              // t?.handleTableUpdates(setUpdates);
               closure?.streamQueries.handleTableUpdates(setUpdates);
             });
           });

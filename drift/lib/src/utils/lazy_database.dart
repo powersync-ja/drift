@@ -1,19 +1,23 @@
 import 'dart:async';
 
-import 'package:drift/backends.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/src/runtime/executor/stream_queries.dart';
 
 /// Signature of a function that opens a database connection when instructed to.
 typedef DatabaseOpener<DB extends QueryExecutor> = FutureOr<DB> Function();
 
+/// A special database connection that delegates work to another [DatabaseConnection].
+/// The other executor is lazily opened by a [DatabaseOpener].
 class LazyDatabaseConnection extends LazyDatabase<DatabaseConnection>
     implements DatabaseConnection {
-  LazyDatabaseConnection(super.opener,
-      {SqlDialect super.dialect = SqlDialect.sqlite}) {
-    this.streamQueries = StreamQueryStore();
+  /// Declares a [LazyDatabaseConnection] that will run [opener] when the database is
+  /// first requested to be opened. You must specify the same [dialect] as the
+  /// underlying database has
+  LazyDatabaseConnection(super.opener, {super.dialect = SqlDialect.sqlite}) {
+    streamQueries = StreamQueryStore();
   }
 
+  @override
   late final StreamQueryStore streamQueries;
 
   @override
