@@ -53,13 +53,9 @@ class ServerImplementation implements DriftServer {
       _closeRemainingConnections();
       _tableUpdateNotifications.close();
     });
-    print('test');
-    print(connection.streamQueries);
     connection.streamQueries
         .updatesForSync(TableUpdateQuery.any())
         .forEach((update) {
-      print('zzzzzzz');
-      print(update);
       dispatchTableUpdateNotification(NotifyTablesUpdated(update.toList()));
     });
   }
