@@ -1,3 +1,18 @@
+## 2.16.0-dev
+
+- When a migration throws, the database will now block subsequent operations
+  instead of potentially allowing them to operate on a database in an
+  inconsistent state.
+- Statements built through the Dart query builder will now run in the context
+  active while they are running, instead of the context active at the time they
+  were created. For instance, creating an `UpdateStatement` with
+  `database.update` outside of a transaction and then calling
+  `UpdateStatement.write` inside of a transaction will now perform the update
+  inside of the transaction, instead of causing a deadlock.
+- Improve stack traces for errors happening on drift isolates (which includes
+  usages of `NativeDatabase.createInBackground`).
+- Don't cache `EXPLAIN` statements, avoiding schema locks.
+
 ## 2.15.0
 
 - Methods in the query builder API now respect custom types.

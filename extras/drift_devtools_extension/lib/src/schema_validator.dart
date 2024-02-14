@@ -60,9 +60,9 @@ class SchemaVerifier extends AutoDisposeAsyncNotifier<SchemaStatus> {
       for (final row in await database
           .select('SELECT name, sql FROM sqlite_schema;', [])) {
         final name = row['name'] as String;
-        final sql = row['sql'] as String;
+        final sql = row['sql'] as String?;
 
-        if (!isInternalElement(name, virtualTables)) {
+        if (!isInternalElement(name, virtualTables) && sql != null) {
           actual.add(Input(name, sql));
         }
       }
@@ -95,9 +95,9 @@ class SchemaVerifier extends AutoDisposeAsyncNotifier<SchemaStatus> {
     for (final row
         in newDatabase.select('SELECT name, sql FROM sqlite_schema;', [])) {
       final name = row['name'] as String;
-      final sql = row['sql'] as String;
+      final sql = row['sql'] as String?;
 
-      if (!isInternalElement(name, virtuals)) {
+      if (!isInternalElement(name, virtuals) && sql != null) {
         inputs.add(Input(name, sql));
       }
     }
