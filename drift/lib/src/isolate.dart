@@ -51,7 +51,7 @@ class RunningDriftServer {
 
   RunningDriftServer(
     this.self,
-    QueryExecutor connection, {
+    DatabaseConnection connection, {
     this.killIsolateWhenDone = true,
     bool closeConnectionAfterShutdown = true,
     this.onlyAcceptSingleConnection = false,

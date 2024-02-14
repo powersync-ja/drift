@@ -8,9 +8,9 @@ library drift.wasm;
 
 import 'dart:async';
 import 'dart:html';
-import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:drift/drift.dart';
 import 'package:drift/src/web/wasm_setup.dart';
 import 'package:sqlite3/wasm.dart';
 
@@ -79,6 +79,40 @@ class WasmDatabase extends DelegatedDatabase {
       _WasmDelegate(sqlite3, null, setup, null, cachePreparedStatements),
       logStatements,
     );
+  }
+
+  /// Creates a [DatabaseConnection] which reports table change
+  /// notifications from the SQLite connection [CommonDatabase] `updates`
+  static DatabaseConnection withTableUpdates({
+    required CommonSqlite3 sqlite3,
+    required String path,
+    WasmDatabaseSetup? setup,
+    IndexedDbFileSystem? fileSystem,
+    bool logStatements = false,
+    bool cachePreparedStatements = true,
+  }) {
+    DatabaseConnection? closure;
+    var connection = DatabaseConnection(
+      WasmDatabase._(
+        _WasmDelegate(sqlite3, path, (CommonDatabase db) {
+          // Add table change notifications
+          db.updates.forEach((element) {
+            Future.delayed(Duration(seconds: 1), () {
+              var setUpdates = <TableUpdate>{};
+              setUpdates.add(TableUpdate(element.tableName));
+              closure?.streamQueries.handleTableUpdates(setUpdates);
+            });
+          });
+          if (setup != null) {
+            return setup(db);
+          }
+        }, fileSystem, cachePreparedStatements),
+        logStatements,
+      ),
+    );
+    // t = connection.streamQueries;
+    closure = connection;
+    return connection;
   }
 
   /// Opens a database on the web.

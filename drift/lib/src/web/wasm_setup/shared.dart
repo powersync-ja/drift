@@ -190,7 +190,7 @@ class DriftServerController {
             }
           : null;
 
-      final server = DriftServer(LazyDatabase(() => openConnection(
+      final server = DriftServer(LazyDatabaseConnection(() => openConnection(
             sqlite3WasmUri: message.sqlite3WasmUri,
             databaseName: message.databaseName,
             storage: message.storage,
@@ -211,7 +211,7 @@ class DriftServerController {
 
   /// Loads a new sqlite3 WASM module, registers an appropriate VFS for [storage]
   /// and finally opens a database, creating it if it doesn't exist.
-  Future<QueryExecutor> openConnection({
+  Future<DatabaseConnection> openConnection({
     required Uri sqlite3WasmUri,
     required String databaseName,
     required WasmStorageImplementation storage,
@@ -250,7 +250,9 @@ class DriftServerController {
     }
 
     sqlite3.registerVirtualFileSystem(vfs, makeDefault: true);
-    var db = WasmDatabase(sqlite3: sqlite3, path: '/database', setup: _setup);
+
+    var db = WasmDatabase.withTableUpdates(
+        sqlite3: sqlite3, path: '/database', setup: _setup);
 
     if (close != null) {
       return db.interceptWith(_CloseVfsOnClose(close));

@@ -17,7 +17,7 @@ import 'src/remote/protocol.dart';
 export 'remote.dart' show DriftRemoteException;
 
 /// Signature of a function that opens a database connection.
-typedef DatabaseOpener = QueryExecutor Function();
+typedef DatabaseOpener<DB extends QueryExecutor> = DB Function();
 
 /// Defines utilities to run drift in a background isolate. In the operation
 /// mode created by these utilities, there's a single background isolate doing
@@ -175,7 +175,7 @@ class DriftIsolate {
   /// to call [DriftIsolate.inCurrent] will be killed.
   ///
   /// {@macro drift_isolate_serialize}
-  factory DriftIsolate.inCurrent(DatabaseOpener opener,
+  factory DriftIsolate.inCurrent(DatabaseOpener<DatabaseConnection> opener,
       {bool killIsolateWhenDone = false, bool serialize = false}) {
     final server = RunningDriftServer(Isolate.current, opener(),
         killIsolateWhenDone: killIsolateWhenDone);
@@ -345,7 +345,7 @@ extension ComputeWithDriftIsolate<DB extends DatabaseConnectionUser> on DB {
 /// used to open the underlying database connection.
 void _startDriftIsolate(List args) {
   final sendPort = args[0] as SendPort;
-  final opener = args[1] as DatabaseOpener;
+  final opener = args[1] as DatabaseOpener<DatabaseConnection>;
 
   final server = RunningDriftServer(Isolate.current, opener());
   sendPort.send(server.portToOpenConnection);
